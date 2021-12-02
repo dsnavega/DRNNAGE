@@ -21,8 +21,7 @@ Imports:
     shinyWidgets,
     kableExtra,
     dplyr,
-    readr,
-    magrittr
+    readr
 Remotes: 
     github::dsnavega/rumr,
     github::dsnavega/rmar,

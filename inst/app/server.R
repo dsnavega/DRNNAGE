@@ -26,6 +26,8 @@
 #'
 shinyServer(function(input, output, session) {
 
+  library(magrittr)
+
   # Read data list from .rds and assign it to server scope
   data <- readr::read_rds(file = "data/data.rds")
   for(name in names(data)) {
@@ -151,22 +153,20 @@ shinyServer(function(input, output, session) {
 
       output$tbl_pred <- function (){
         caption <- paste0("Predicted Age-at-Death")
-        pred_tbl %>%
-          kableExtra::kable(caption = caption) %>%
-          kableExtra::kable_styling(
-            bootstrap_options = "striped",
-            full_width = TRUE,
-          )
+        kableExtra::kable_styling(
+          kable_input = kableExtra::kable(x = pred_tbl, caption = caption),
+          bootstrap_options = "striped",
+          full_width = TRUE,
+        )
       }
 
       output$tbl_int <- function() {
         caption <- paste0("Predictive Interval (", round((1-alpha) * 100),"%)")
-        int_tbl %>%
-          kableExtra::kable(caption = caption) %>%
-          kableExtra::kable_styling(
-            bootstrap_options = "striped",
-            full_width = TRUE,
-          )
+        kableExtra::kable_styling(
+          kable_input =  kableExtra::kable(x = int_tbl, caption = caption),
+          bootstrap_options = "striped",
+          full_width = TRUE,
+        )
       }
 
       output$plt_tg_rum <- shiny::renderPlot({
@@ -194,12 +194,12 @@ shinyServer(function(input, output, session) {
         )
 
         caption <- "Regression Model Assessment (LOOCV)"
-        rma_tbl %>%
-          dplyr::bind_rows() %>%
-          kableExtra::kable(caption = caption,format = "html") %>%
-          kableExtra::kable_styling(
-            bootstrap_options = "striped",
-          )
+        kableExtra::kable_styling(
+          kable_input = kableExtra::kable(
+            x = dplyr::bind_rows(rma_tbl), caption = caption
+          ),
+          bootstrap_options = "striped",
+        )
 
       }
 
