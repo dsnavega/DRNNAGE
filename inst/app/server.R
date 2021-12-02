@@ -149,7 +149,7 @@ shinyServer(function(input, output, session) {
       pred_tbl <- cbind(estimate, rbind(colMeans(int_tbl[,-1])))
       colnames(pred_tbl) <- c("Estimate", "Lower", "Upper")
 
-      output$tbl_pred <- shiny::renderText({
+      output$tbl_pred <- function (){
         caption <- paste0("Predicted Age-at-Death")
         pred_tbl %>%
           kableExtra::kable(caption = caption) %>%
@@ -157,9 +157,9 @@ shinyServer(function(input, output, session) {
             bootstrap_options = "striped",
             full_width = TRUE,
           )
-      })
+      }
 
-      output$tbl_int <- shiny::renderText({
+      output$tbl_int <- function() {
         caption <- paste0("Predictive Interval (", round((1-alpha) * 100),"%)")
         int_tbl %>%
           kableExtra::kable(caption = caption) %>%
@@ -167,7 +167,7 @@ shinyServer(function(input, output, session) {
             bootstrap_options = "striped",
             full_width = TRUE,
           )
-      })
+      }
 
       output$plt_tg_rum <- shiny::renderPlot({
         rumr:::plot.rumr(
@@ -186,7 +186,7 @@ shinyServer(function(input, output, session) {
 
       rma_int <- rumr:::predict.rumr(rma_rum, alpha = alpha)
 
-      output$tbl_rma <- shiny::renderText({
+      output$tbl_rma <- function () {
 
         rma_tbl <- rmar::rmar(
           known = Y, predicted = rma_int,
@@ -201,7 +201,7 @@ shinyServer(function(input, output, session) {
             bootstrap_options = "striped",
           )
 
-      })
+      }
 
       output$plt_accu <- shiny::renderPlot({
         rmar::rma_accuracy_plot(
