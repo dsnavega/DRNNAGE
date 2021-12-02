@@ -1,0 +1,2 @@
+<style> p {text-align: justify} </style>
+Pubic symphysys analysis is based on a component-based system focused on the metamorphic and degenerative changes of three traits of this structure: rim development, topography, and texture of the symphyseal face. These three components are assessed with a three-stage coding system emphasizing early metamorphic or development traits such as the presence of billowing (a pattern of transverse ridges and furrows) and late degenerative traits such as the flattening and erosion of the symphyseal face. 
