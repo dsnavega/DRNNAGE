@@ -196,7 +196,7 @@ shinyServer(function(input, output, session) {
         caption <- "Regression Model Assessment (LOOCV)"
         rma_tbl %>%
           dplyr::bind_rows() %>%
-          kableExtra::kable(caption = caption) %>%
+          kableExtra::kable(caption = caption,format = "html") %>%
           kableExtra::kable_styling(
             bootstrap_options = "striped",
           )
