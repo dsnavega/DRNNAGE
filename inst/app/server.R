@@ -236,17 +236,17 @@ shinyServer(function(input, output, session) {
       # Regression Uncertainty Modelling (Truncated Gaussian & Conformal)
       tg_rum <- rumr::rumr(
         known = Y, predicted = loocv,
-        type = "gaussian", interval = c(16, 104)
+        type = "gaussian", interval = c(18, 102)
       )
 
       cp_rum <- rumr::rumr(
         known = Y, predicted = loocv,
-        type = "conformal", interval = c(16, 104)
+        type = "conformal", interval = c(18, 102)
       )
 
       lc_rum <- rumr::rumr(
         known = Y, predicted = loocv,
-        type = "local", interval = c(16, 104),
+        type = "local", interval = c(18, 102),
         alpha = alpha
       )
 
@@ -314,7 +314,7 @@ shinyServer(function(input, output, session) {
 
         rma_tbl <- rmar::rmar(
           known = Y, predicted = rma_int,
-          interval = c(16, 104), digits = 3
+          interval = c(18, 102), digits = 3
         )
 
         caption <- "Regression Model Assessment (LOOCV)"
@@ -330,21 +330,21 @@ shinyServer(function(input, output, session) {
       output$plt_accu <- shiny::renderPlot({
         rmar::rma_accuracy_plot(
           known = Y, predicted = loocv,
-          interval = c(16, 104), label = "Age-at-Death"
+          interval = c(18, 102), label = "Age-at-Death"
         )
       })
 
       output$plt_bias <- shiny::renderPlot({
         rmar::rma_bias_plot(
           known = Y, predicted = loocv,
-          interval = c(16, 104), label = "Age-at-Death"
+          interval = c(18, 102), label = "Age-at-Death"
         )
       })
 
       output$plt_effi <- shiny::renderPlot({
         rmar::rma_efficiency_plot(
           known = Y, predicted = rma_int,
-          interval = c(16, 104)
+          interval = c(18, 102)
         )
       })
 
@@ -394,7 +394,7 @@ shinyServer(function(input, output, session) {
         if(isFALSE(surrogate)) {
           approximation <- rumr:::clamp_value(
             x = lsmr:::predict.lsmr(ls_model,x[,traits]),
-            interval = c(16, 104)
+            interval = c(18, 102)
           )
           ls_tbl <- dplyr::bind_cols(
             Baseline = ls_model$coefficients[1],
