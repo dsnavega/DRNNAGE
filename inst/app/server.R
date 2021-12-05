@@ -26,14 +26,20 @@
 #'
 shinyServer(function(input, output, session) {
 
+  # Global ----
+  # Load magrittr library, runs from the inst/app environment
   library(magrittr)
 
   # Read data list from .rds and assign it to server scope
   data <- readr::read_rds(file = "data/data.rds")
+
   for(name in names(data)) {
     assign(x = name, value = data[[name]])
   }
+
   rm(data)
+
+  # Helpers ----
 
   trait_tbl <- function(input, traits) {
     trait_tbl <- tibble::tibble_row()
@@ -42,6 +48,7 @@ shinyServer(function(input, output, session) {
     }
     return(trait_tbl)
   }
+
   paired_pooler <- function(x, y) {
 
     pooling <- Vectorize(
@@ -63,6 +70,105 @@ shinyServer(function(input, output, session) {
     return(x)
 
   }
+
+  # Build UI Components ----
+  output$estimateUI <- shiny::renderUI({
+
+    # Current Case
+    x <- current_case()
+    # Available Traits
+    ntraits <- sum(!is.na(x))
+    traits <- names(x)[!is.na(x)]
+
+    shiny::validate(
+      shiny::need(
+        expr = ntraits >= 2,
+        message = "At least two traits needed to create a neural model."
+      )
+    )
+
+    shiny::tagList(
+      shiny::br(),
+      shiny::column(width = 4,
+        shiny::br(),
+        shiny::tableOutput("tbl_pred"),
+        shiny::br(),
+        shiny::br(),
+        shiny::tableOutput("tbl_int")
+      ),
+      shiny::column(width = 7, offset = 1,
+        shiny::br(),
+        shiny::plotOutput("plt_tg_rum")
+      )
+    )
+
+  })
+
+  output$explainUI <- shiny::renderUI({
+
+    # Parameters
+    surrogate <- as.logical(input$surrogate)
+
+    # Current Case
+    x <- current_case()
+    # Available Traits
+    ntraits <- sum(!is.na(x))
+    traits <- names(x)[!is.na(x)]
+
+    shiny::validate(
+      shiny::need(
+        expr = ntraits >= 2,
+        message = "At least two traits needed to create a linear approximation."
+      )
+    )
+
+    shiny::tagList(
+      shiny::fluidRow(
+
+        column(width = 6,
+          if (isFALSE(surrogate)) {
+            shiny::tableOutput("tbl_ls_summary")
+          },
+          shiny::tableOutput("tbl_ls_model")
+        ),
+
+        column(width = 6,
+          shiny::tableOutput("tbl_ls_pred"),
+          shiny::tableOutput("tbl_ls_cont")
+        )
+
+      )
+    )
+
+  })
+
+  output$assessUI <- shiny::renderUI({
+
+    # Current Case
+    x <- current_case()
+    # Available Traits
+    ntraits <- sum(!is.na(x))
+    traits <- names(x)[!is.na(x)]
+
+    shiny::validate(
+      shiny::need(
+        expr = ntraits >= 2,
+        message = "At least two traits needed to create a neural model."
+      )
+    )
+
+    shiny::tagList(
+      shiny::fluidRow(
+        shiny::column(width = 12, shiny::tableOutput("tbl_rma"))
+      ),
+      shiny::br(),
+      shiny::fluidRow(
+        column(width = 6, shiny::plotOutput("plt_bias")),
+        column(width = 6, shiny::plotOutput("plt_effi"))
+      )
+    )
+
+  })
 
   # User data from UI input(s) ----
   current_case <- shiny::reactive({
@@ -86,7 +192,12 @@ shinyServer(function(input, output, session) {
   # Analyze ----
   shiny::observeEvent(input$btn_analyze, {
 
-
+    # Parameters
+    alpha <- as.numeric(input$alpha)
+    seed <- as.numeric(input$seed)
+    width <- as.numeric(input$width)
+    depth <- as.numeric(input$depth)
+    surrogate <- as.logical(input$surrogate)
 
     # Current Case
     x <- current_case()
@@ -94,26 +205,32 @@ shinyServer(function(input, output, session) {
     ntraits <- sum(!is.na(x))
     traits <- names(x)[!is.na(x)]
 
-    # Parameters
-    alpha <- as.numeric(input$alpha)
-    seed <- as.numeric(input$seed)
-    width <- as.numeric(input$width)
-    depth <- as.numeric(input$depth)
+    shiny::validate(
+      shiny::need(
+        expr = ntraits >= 2,
+        message = "At least two traits required."
+      )
+    )
 
     shiny::withProgress(message  = "Analyzing data...", expr = {
 
       set.seed(seed)
-
       shiny::incProgress(message = "Fitting neural model ....")
-      # Build Network Model
+
+      # Build Neural Network and Linear Surrogate Models
       nnet_model <- rwnnet::rwnnet(
         algorithm = input$algorithm,
         size = rep(width, depth),
         x = X[, traits], y = Y
       )
+      loocv <- rwnnet:::predict.rwnnet(nnet_model)
 
-      # LOOCV for Uncertainity Modelling and Model Assessment
-      loocv = rwnnet:::predict.rwnnet(nnet_model)
+      ls_model <- lsmr::lsmr(x = X[,traits], y = loocv)
+
+      # LOOCV for Uncertainty Modelling and Model Assessment
+      if (surrogate) {
+        loocv <- lsmr:::predict.lsmr(ls_model)
+      }
 
       shiny::incProgress(message = "Fitting uncertainty models ....")
       # Regression Uncertainty Modelling (Truncated Gaussian & Conformal)
@@ -136,7 +253,14 @@ shinyServer(function(input, output, session) {
       shiny::incProgress(message = "Estimating age-at-death ....")
 
       # Age-at-Death Estimation ----
-      estimate <- rwnnet:::predict.rwnnet(nnet_model, x[, traits])
+      if (isFALSE(surrogate)) {
+        estimate <- rwnnet:::predict.rwnnet(nnet_model, x[, traits])
+      } else {
+        estimate <- lsmr:::predict.lsmr(ls_model, x[,traits])
+      }
+
+      estimate <- rumr:::clamp_value(estimate, c(16, 104))
+
       tg_int <- rumr:::predict.rumr(tg_rum, estimate, alpha)
       cp_int <- rumr:::predict.rumr(cp_rum, estimate, alpha)
       lc_int <- rumr:::predict.rumr(lc_rum, estimate, alpha)
@@ -165,7 +289,7 @@ shinyServer(function(input, output, session) {
         kableExtra::kable_styling(
           kable_input =  kableExtra::kable(x = int_tbl, caption = caption),
           bootstrap_options = "striped",
-          full_width = TRUE,
+          full_width = TRUE
         )
       }
 
@@ -186,7 +310,7 @@ shinyServer(function(input, output, session) {
 
       rma_int <- rumr:::predict.rumr(rma_rum, alpha = alpha)
 
-      output$tbl_rma <- function () {
+      output$tbl_rma <- shiny::renderText({
 
         rma_tbl <- rmar::rmar(
           known = Y, predicted = rma_int,
@@ -198,10 +322,10 @@ shinyServer(function(input, output, session) {
           kable_input = kableExtra::kable(
             x = dplyr::bind_rows(rma_tbl), caption = caption
           ),
-          bootstrap_options = "striped",
+          bootstrap_options = "striped"
         )
 
-      }
+      })
 
       output$plt_accu <- shiny::renderPlot({
         rmar::rma_accuracy_plot(
@@ -223,6 +347,100 @@ shinyServer(function(input, output, session) {
           interval = c(16, 104)
         )
       })
+
+      # Linear Surrogate Model ----
+      shiny::incProgress(message = "Assessing linear surrogate ....")
+
+      output$tbl_ls_summary <- shiny::renderText({
+
+        ls_tbl <- ls_model$assessment %>%
+          dplyr::mutate_if(is.numeric, round, digits = 3)
+
+        caption <- "Surrogate Model Assessment"
+        kableExtra::kable_styling(
+          kable_input = kableExtra::kable(
+            x = dplyr::bind_rows(ls_tbl), caption = caption,
+            align = "c"
+          ),
+          bootstrap_options = "striped"
+        )
+
+      })
+
+      output$tbl_ls_model <- shiny::renderText({
+
+        caption <- "Linear Surrogate Model"
+
+        ls_tbl <- ls_model$summary %>%
+          dplyr::mutate_if(is.numeric, round, digits = 3) %>%
+          dplyr::arrange(rank) %>%
+          dplyr::rename(Trait = feature) %>%
+          dplyr::rename(CAR = estimate) %>%
+          dplyr::rename(Omega = omega) %>%
+          dplyr::rename("p-value" = p.value) %>%
+          dplyr::rename(Rank = rank)
+
+        kableExtra::kable_styling(
+          kable_input = kableExtra::kable(
+            x = dplyr::bind_rows(ls_tbl), caption = caption
+          ),
+          bootstrap_options = "striped"
+        )
+
+      })
+
+      output$tbl_ls_pred <- shiny::renderText({
+
+        if(isFALSE(surrogate)) {
+          approximation <- rumr:::clamp_value(
+            x = lsmr:::predict.lsmr(ls_model,x[,traits]),
+            interval = c(16, 104)
+          )
+          ls_tbl <- dplyr::bind_cols(
+            Baseline = ls_model$coefficients[1],
+            Estimate = estimate,
+            Approximation = approximation
+          ) %>%
+            dplyr::mutate(Difference = Estimate - Approximation) %>%
+            dplyr::mutate_if(is.numeric,round, digits = 3)
+
+        } else {
+          ls_tbl <- dplyr::bind_cols(
+            Baseline = ls_model$coefficients[1],
+            Estimate = estimate
+          ) %>%
+            dplyr::mutate_if(is.numeric,round, digits = 3)
+        }
+
+        caption <- "Linear Approximation"
+
+        kableExtra::kable_styling(
+          kable_input = kableExtra::kable(
+            x = dplyr::bind_rows(ls_tbl), caption = caption,
+            align = "c"
+          ),
+          bootstrap_options = "striped"
+        )
+
+      })
+
+      output$tbl_ls_cont <- shiny::renderText({
+
+        ls_tbl <- lsmr:::predict.lsmr(ls_model, x[,traits], type = "table") %>%
+          dplyr::mutate_if(is.numeric, round, digits = 3) %>%
+          dplyr::arrange(Rank) %>%
+          dplyr::rename(Trait = Feature)
+
+        caption <- "Trait Contribution"
+        kableExtra::kable_styling(
+          kable_input = kableExtra::kable(
+            x = dplyr::bind_rows(ls_tbl), caption = caption
+          ),
+          bootstrap_options = "striped"
+        )
+
+      })
+
 
     })
 

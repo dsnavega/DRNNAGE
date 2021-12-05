@@ -25,4 +25,5 @@ Imports:
 Remotes: 
     github::dsnavega/rumr,
     github::dsnavega/rmar,
-    github::dsnavega/rwnnet
+    github::dsnavega/rwnnet,
+    github::dsnavega/lsmr

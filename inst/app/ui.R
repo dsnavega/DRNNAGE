@@ -99,28 +99,17 @@ ui <- shiny::tagList(
 
             shiny::tabPanel(title = "Estimate",
               shiny::hr(),
-              shiny::column(width = 4,
-                shiny::br(),
-                shiny::tableOutput("tbl_pred"),
-                shiny::br(),
-                shiny::tableOutput("tbl_int")
-              ),
-              shiny::column(width = 7, offset = 1,
-                shiny::br(),
-                shiny::plotOutput("plt_tg_rum")
-              )
+              shiny::uiOutput("estimateUI")
             ),
 
-            shiny::tabPanel(title = "Model Assessment",
+            shiny::tabPanel(title = "Explain",
               shiny::hr(),
-              shiny::fluidRow(
-                shiny::column(width = 12, shiny::tableOutput("tbl_rma"))
-              ),
-              shiny::br(),
-              shiny::fluidRow(
-                column(width = 6, shiny::plotOutput("plt_bias")),
-                column(width = 6, shiny::plotOutput("plt_effi"))
-              )
+              shiny::uiOutput("explainUI")
+            ),
+
+            shiny::tabPanel(title = "Assess",
+              shiny::hr(),
+              shiny::uiOutput("assessUI")
             )
           )
         )
