@@ -106,9 +106,6 @@ shinyServer(function(input, output, session) {
 
   output$explainUI <- shiny::renderUI({
 
-    # Parameters
-    surrogate <- as.logical(input$surrogate)
-
     # Current Case
     x <- current_case()
     # Available Traits
@@ -126,9 +123,7 @@ shinyServer(function(input, output, session) {
       shiny::fluidRow(
 
         column(width = 6,
-          if (isFALSE(surrogate)) {
-            shiny::tableOutput("tbl_ls_summary")
-          },
+          shiny::tableOutput("tbl_ls_summary"),
           shiny::tableOutput("tbl_ls_model")
         ),
 
@@ -197,7 +192,6 @@ shinyServer(function(input, output, session) {
     seed <- as.numeric(input$seed)
     width <- as.numeric(input$width)
     depth <- as.numeric(input$depth)
-    surrogate <- as.logical(input$surrogate)
 
     # Current Case
     x <- current_case()
@@ -223,14 +217,12 @@ shinyServer(function(input, output, session) {
         size = rep(width, depth),
         x = X[, traits], y = Y
       )
+
       loocv <- rwnnet:::predict.rwnnet(nnet_model)
 
       ls_model <- lsmr::lsmr(x = X[,traits], y = loocv)
 
       # LOOCV for Uncertainty Modelling and Model Assessment
-      if (surrogate) {
-        loocv <- lsmr:::predict.lsmr(ls_model)
-      }
 
       shiny::incProgress(message = "Fitting uncertainty models ....")
       # Regression Uncertainty Modelling (Truncated Gaussian & Conformal)
@@ -253,13 +245,8 @@ shinyServer(function(input, output, session) {
       shiny::incProgress(message = "Estimating age-at-death ....")
 
       # Age-at-Death Estimation ----
-      if (isFALSE(surrogate)) {
-        estimate <- rwnnet:::predict.rwnnet(nnet_model, x[, traits])
-      } else {
-        estimate <- lsmr:::predict.lsmr(ls_model, x[,traits])
-      }
-
-      estimate <- rumr:::clamp_value(estimate, c(16, 104))
+      estimate <- rwnnet:::predict.rwnnet(nnet_model, x[, traits])
+      estimate <- rumr:::clamp_value(estimate, c(18, 102))
 
       tg_int <- rumr:::predict.rumr(tg_rum, estimate, alpha)
       cp_int <- rumr:::predict.rumr(cp_rum, estimate, alpha)
@@ -391,26 +378,17 @@ shinyServer(function(input, output, session) {
 
       output$tbl_ls_pred <- shiny::renderText({
 
-        if(isFALSE(surrogate)) {
-          approximation <- rumr:::clamp_value(
-            x = lsmr:::predict.lsmr(ls_model,x[,traits]),
-            interval = c(18, 102)
-          )
-          ls_tbl <- dplyr::bind_cols(
-            Baseline = ls_model$coefficients[1],
-            Estimate = estimate,
-            Approximation = approximation
-          ) %>%
-            dplyr::mutate(Difference = Estimate - Approximation) %>%
-            dplyr::mutate_if(is.numeric,round, digits = 3)
+        approximation <- rumr:::clamp_value(
+          x = lsmr:::predict.lsmr(ls_model,x[,traits]),
+          interval = c(18, 102)
+        )
 
-        } else {
-          ls_tbl <- dplyr::bind_cols(
-            Baseline = ls_model$coefficients[1],
-            Estimate = estimate
-          ) %>%
-            dplyr::mutate_if(is.numeric,round, digits = 3)
-        }
+        ls_tbl <- dplyr::bind_cols(
+          Baseline = ls_model$coefficients[1],
+          Estimate = estimate,
+          Approximation = approximation
+        ) %>%
+          dplyr::mutate_if(is.numeric,round, digits = 3)
 
         caption <- "Linear Approximation"
 
@@ -426,10 +404,24 @@ shinyServer(function(input, output, session) {
 
       output$tbl_ls_cont <- shiny::renderText({
 
+        rescale <- function(x) {
+          sign(x) * (abs(x) / sum(x))
+        }
+
+        approximation <- rumr:::clamp_value(
+          x = lsmr:::predict.lsmr(ls_model,x[,traits]),
+          interval = c(18, 102)
+        )
+
+        baseline <- ls_model$coefficients[1]
+
         ls_tbl <- lsmr:::predict.lsmr(ls_model, x[,traits], type = "table") %>%
-          dplyr::mutate_if(is.numeric, round, digits = 3) %>%
           dplyr::arrange(Rank) %>%
-          dplyr::rename(Trait = Feature)
+          dplyr::rename(Trait = Feature) %>%
+          dplyr::mutate(
+            Contribution = (approximation - baseline) * rescale(Contribution)
+          ) %>%
+          dplyr::mutate_if(is.numeric, round, digits = 3)
 
         caption <- "Trait Contribution"
         kableExtra::kable_styling(

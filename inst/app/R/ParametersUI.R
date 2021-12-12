@@ -89,13 +89,6 @@ ParametersUI <- function() {
       step = 1
     ),
 
-    shiny::checkboxInput(
-      inputId = "surrogate",
-      label =  "Linear Surrogate",
-      value = FALSE,
-      width = "100%"
-    ),
-
     shiny::hr(),
     shiny::actionButton(
       inputId = "btn_analyze",

@@ -15,16 +15,22 @@ Language: en
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
-Imports: 
-    shiny,
-    shinythemes,
-    shinyWidgets,
-    kableExtra,
-    dplyr,
-    readr
 Remotes: 
     github::dsnavega/rumr,
     github::dsnavega/rmar,
     github::dsnavega/rwnnet,
     github::dsnavega/lsmr
-
+Depends: 
+    markdown,
+    shiny,
+    shinythemes,
+    shinyWidgets,
+    kableExtra,
+    readr,
+    dplyr,
+    magrittr,
+    rwnnet,
+    lsmr,
+    rmar,
+    rumr,
+    ggplot2
