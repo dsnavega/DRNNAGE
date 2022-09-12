@@ -1,6 +1,6 @@
 # This file is part of DRNNAGE
 #
-# Copyright (C) 2021, David Senhora Navega
+# Copyright (C) 2022, David Senhora Navega
 #
 # DRNNAGE is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ ui <- shiny::tagList(
           shiny::br(),
           shinyWidgets::panel(
             heading = "License",
-            footer = "(C) 2021 David Senhora Navega",
+            footer = "(C) 2022 David Senhora Navega",
             shiny::includeMarkdown("www/markdown/license.md")
           )
         )

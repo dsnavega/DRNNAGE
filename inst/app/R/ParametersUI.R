@@ -1,6 +1,6 @@
 # This file is part of DRNNAGE
 #
-# Copyright (C) 2021, David Senhora Navega
+# Copyright (C) 2022, David Senhora Navega
 #
 # DRNNAGE is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,19 +27,15 @@
 ParametersUI <- function() {
 
   shiny::tagList(
-    # shiny::h3("Parameters"),
 
     shiny::selectInput(
       inputId = "algorithm",
       label = "Network Algorithm",
       choices = c(
-        "slrwnnet",   # Shallow Randomized Network (ELM or RVFL)
-        "drwnnet",    # Deep+ Fully Randomized Network (RVFL)
-        "edrwnnet",   # Ensemble Deep Fully Randomized Network (RVFL)
+        "drwnnet",    # Deep Fully Randomized Network (ELM or RVFL)
         "aerwnnet",   # Stacked Auto-encoding Network (Shallow/Deep+)
-        "edaerwnnet", # Ensemble Stacked Auto-encoding Network (Deep*)
-        "saerwnnet",  # Supervised Auto-encoding Network (Shallow/Deep*)
-        "r2rwnnet"    # Recursive Randomized Network (Deep*)
+        "edrwnnet",   # Ensemble Deep Fully Randomized Network (RVFL)
+        "saerwnnet"   # Supervised Auto-encoding Network
       ),
       selected = "edrwnnet"
     ),
@@ -49,7 +45,7 @@ ParametersUI <- function() {
       label = "Layer Size",
       value = 32,
       min = 8,
-      max = 512,
+      max = 256,
       step = 8
     ),
 
@@ -58,25 +54,41 @@ ParametersUI <- function() {
       label = "Network Depth",
       value = 8,
       min = 2,
-      max = 8,
+      max = 16,
       step = 1
+    ),
+
+    shiny::sliderInput(
+      inputId = "eta",
+      label = "Gaussian Noise",
+      value = 1.00,
+      min = 0.0,
+      max = 2.57,
+      step = 0.01
     ),
 
     shiny::selectInput(
       inputId = "type",
       label = "Uncertainty Modeler",
-      choices = c(
-        "gaussian", "conformal", "local"
-      ),
-      selected = "gaussian"
+      choices = c("conformal", "gaussian", "local"),
+      selected = "conformal"
     ),
 
     shiny::sliderInput(
       inputId = "alpha",
       label = "Uncertainty Level (alpha)",
-      value = 0.05,
+      value = 0.1,
       min = 0.01,
       max = 0.5,
+      step = 0.01
+    ),
+
+    shiny::sliderInput(
+      inputId = "exponent",
+      label = "Variance Model Exponent",
+      value = 1,
+      min = 0.01,
+      max = 1,
       step = 0.01
     ),
 
@@ -94,7 +106,7 @@ ParametersUI <- function() {
       inputId = "btn_analyze",
       label = "Analyze",
       width = "100%"
-      )
+    )
 
   )
 

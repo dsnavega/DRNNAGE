@@ -1,6 +1,6 @@
 # This file is part of DRNNAGE
 #
-# Copyright (C) 2021, David Senhora Navega
+# Copyright (C) 2022, David Senhora Navega
 #
 # DRNNAGE is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -192,6 +192,8 @@ shinyServer(function(input, output, session) {
     seed <- as.numeric(input$seed)
     width <- as.numeric(input$width)
     depth <- as.numeric(input$depth)
+    exponent <- as.numeric(input$exponent)
+    eta <- as.numeric(input$eta)
 
     # Current Case
     x <- current_case()
@@ -215,7 +217,8 @@ shinyServer(function(input, output, session) {
       nnet_model <- rwnnet::rwnnet(
         algorithm = input$algorithm,
         size = rep(width, depth),
-        x = X[, traits], y = Y
+        x = X[, traits], y = Y,
+        eta = eta, flat = T, skip = T
       )
 
       loocv <- rwnnet:::predict.rwnnet(nnet_model)
@@ -228,18 +231,19 @@ shinyServer(function(input, output, session) {
       # Regression Uncertainty Modelling (Truncated Gaussian & Conformal)
       tg_rum <- rumr::rumr(
         known = Y, predicted = loocv,
-        type = "gaussian", interval = c(18, 102)
+        type = "gaussian", interval = c(18, 102), exponent = exponent
       )
 
       cp_rum <- rumr::rumr(
         known = Y, predicted = loocv,
-        type = "conformal", interval = c(18, 102)
+        type = "conformal", signed = T,
+        interval = c(18, 102), exponent = exponent
       )
 
       lc_rum <- rumr::rumr(
         known = Y, predicted = loocv,
         type = "local", interval = c(18, 102),
-        alpha = alpha
+        alpha = alpha, exponent = exponent
       )
 
       shiny::incProgress(message = "Estimating age-at-death ....")
@@ -253,13 +257,15 @@ shinyServer(function(input, output, session) {
       lc_int <- rumr:::predict.rumr(lc_rum, estimate, alpha)
 
       int_tbl <- data.frame(
-        c("Truncated Gaussian", "Conformal Prediction", "Local"),
-        round(rbind(tg_int, cp_int, lc_int)[, c("lower", "upper")], digits = 3)
+        c("Conformal Prediction", "Truncated Gaussian", "Local"),
+        round(rbind(cp_int,tg_int,lc_int)[, c("lower", "upper")], digits = 3)
       )
       colnames(int_tbl) <- c("Uncertainty", "Lower", "Upper")
       rownames(int_tbl) <- NULL
 
-      pred_tbl <- cbind(estimate, rbind(colMeans(int_tbl[,-1])))
+      pred_tbl <- round(
+        cbind(estimate, rbind(colMeans(int_tbl[,-1]))), digits = 3
+      )
       colnames(pred_tbl) <- c("Estimate", "Lower", "Upper")
 
       output$tbl_pred <- function (){
@@ -283,7 +289,7 @@ shinyServer(function(input, output, session) {
       output$plt_tg_rum <- shiny::renderPlot({
         rumr:::plot.rumr(
           x = tg_rum, predicted = estimate,
-          alpha = alpha, label = "Age-at-Death", normalize = F
+          alpha = alpha, label = "Age-at-Death", normalize = FALSE, digits = 3
         )
       })
 
