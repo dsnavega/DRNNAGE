@@ -22,7 +22,6 @@
 # Calçada Martim de Freitas, 3000-456, Coimbra
 # Portugal
 
-
 #' @author David Senhora Navega
 #'
 ui <- shiny::tagList(

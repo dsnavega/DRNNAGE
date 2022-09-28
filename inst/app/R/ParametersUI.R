@@ -32,10 +32,14 @@ ParametersUI <- function() {
       inputId = "algorithm",
       label = "Network Algorithm",
       choices = c(
-        "drwnnet",    # Deep Fully Randomized Network (ELM or RVFL)
-        "aerwnnet",   # Stacked Auto-encoding Network (Shallow/Deep+)
-        "edrwnnet",   # Ensemble Deep Fully Randomized Network (RVFL)
-        "saerwnnet"   # Supervised Auto-encoding Network
+        # Deep Fully Randomized Network (ELM or RVFL)
+        "Deep Fully Randomized Network" = "drwnnet",
+        # Stacked Auto-encoding Network (Shallow/Deep+)
+        "Stacked Randomized Autoencoder" = "aerwnnet",
+        # Ensemble Deep Fully Randomized Network (RVFL)
+        "Ensemble Deep Fully Randomized Network" = "edrwnnet",
+        # Supervised Auto-encoding Network
+        "Supervised Randomized Autoencoder" = "saerwnnet"
       ),
       selected = "edrwnnet"
     ),
@@ -62,15 +66,18 @@ ParametersUI <- function() {
       inputId = "eta",
       label = "Gaussian Noise",
       value = 1.00,
-      min = 0.0,
+      min = 0.00,
       max = 2.57,
       step = 0.01
     ),
 
     shiny::selectInput(
       inputId = "type",
-      label = "Uncertainty Modeler",
-      choices = c("conformal", "gaussian", "local"),
+      label = "Uncertainty Model",
+      choices = c(
+        "Conformal Prediction" = "conformal",
+        "Truncated Gaussian" = "gaussian"
+        ),
       selected = "conformal"
     ),
 
@@ -88,7 +95,7 @@ ParametersUI <- function() {
       label = "Variance Model Exponent",
       value = 1,
       min = 0.01,
-      max = 1,
+      max = 2,
       step = 0.01
     ),
 

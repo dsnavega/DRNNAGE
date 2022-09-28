@@ -228,11 +228,7 @@ shinyServer(function(input, output, session) {
       # LOOCV for Uncertainty Modelling and Model Assessment
 
       shiny::incProgress(message = "Fitting uncertainty models ....")
-      # Regression Uncertainty Modelling (Truncated Gaussian & Conformal)
-      tg_rum <- rumr::rumr(
-        known = Y, predicted = loocv,
-        type = "gaussian", interval = c(18, 102), exponent = exponent
-      )
+      # Regression Uncertainty Modelling
 
       cp_rum <- rumr::rumr(
         known = Y, predicted = loocv,
@@ -240,11 +236,12 @@ shinyServer(function(input, output, session) {
         interval = c(18, 102), exponent = exponent
       )
 
-      lc_rum <- rumr::rumr(
+      tg_rum <- rumr::rumr(
         known = Y, predicted = loocv,
-        type = "local", interval = c(18, 102),
-        alpha = alpha, exponent = exponent
+        type = "gaussian", interval = c(18, 102), exponent = exponent
       )
+
+
 
       shiny::incProgress(message = "Estimating age-at-death ....")
 
@@ -252,13 +249,13 @@ shinyServer(function(input, output, session) {
       estimate <- rwnnet:::predict.rwnnet(nnet_model, x[, traits])
       estimate <- rumr:::clamp_value(estimate, c(18, 102))
 
-      tg_int <- rumr:::predict.rumr(tg_rum, estimate, alpha)
       cp_int <- rumr:::predict.rumr(cp_rum, estimate, alpha)
-      lc_int <- rumr:::predict.rumr(lc_rum, estimate, alpha)
+      tg_int <- rumr:::predict.rumr(tg_rum, estimate, alpha)
+
 
       int_tbl <- data.frame(
-        c("Conformal Prediction", "Truncated Gaussian", "Local"),
-        round(rbind(cp_int,tg_int,lc_int)[, c("lower", "upper")], digits = 3)
+        c("Conformal Prediction", "Truncated Gaussian"),
+        round(rbind(cp_int, tg_int)[, c("lower", "upper")], digits = 3)
       )
       colnames(int_tbl) <- c("Uncertainty", "Lower", "Upper")
       rownames(int_tbl) <- NULL
