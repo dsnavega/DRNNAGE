@@ -71,15 +71,15 @@ ParametersUI <- function() {
       step = 0.01
     ),
 
-    shiny::selectInput(
-      inputId = "type",
-      label = "Uncertainty Model",
-      choices = c(
-        "Conformal Prediction" = "conformal",
-        "Truncated Gaussian" = "gaussian"
-        ),
-      selected = "conformal"
-    ),
+    # shiny::selectInput(
+    #   inputId = "type",
+    #   label = "Uncertainty Model",
+    #   choices = c(
+    #     "Conformal Prediction" = "conformal",
+    #     "Truncated Gaussian" = "gaussian"
+    #   ),
+    #   selected = "conformal"
+    # ),
 
     shiny::sliderInput(
       inputId = "alpha",
@@ -108,7 +108,6 @@ ParametersUI <- function() {
       step = 1
     ),
 
-    shiny::hr(),
     shiny::actionButton(
       inputId = "btn_analyze",
       label = "Analyze",

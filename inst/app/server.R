@@ -37,8 +37,6 @@ shinyServer(function(input, output, session) {
     assign(x = name, value = data[[name]])
   }
 
-  rm(data)
-
   # Helpers ----
 
   trait_tbl <- function(input, traits) {
@@ -194,12 +192,28 @@ shinyServer(function(input, output, session) {
     depth <- as.numeric(input$depth)
     exponent <- as.numeric(input$exponent)
     eta <- as.numeric(input$eta)
+    full_width <- TRUE
 
     # Current Case
     x <- current_case()
     # Available Traits
     ntraits <- sum(!is.na(x))
     traits <- names(x)[!is.na(x)]
+
+    output$reportUI <- shiny::renderUI({
+
+      shiny::tagList(
+        shiny::fluidRow(
+          shiny::br(),
+          shiny::hr(),
+          shiny::downloadButton(
+            outputId = "btn_report",
+            label = "Report",
+            class = "download"
+          )
+        )
+      )
+    })
 
     shiny::validate(
       shiny::need(
@@ -228,8 +242,8 @@ shinyServer(function(input, output, session) {
       # LOOCV for Uncertainty Modelling and Model Assessment
 
       shiny::incProgress(message = "Fitting uncertainty models ....")
-      # Regression Uncertainty Modelling
 
+      # Regression Uncertainty Modelling
       cp_rum <- rumr::rumr(
         known = Y, predicted = loocv,
         type = "conformal", signed = T,
@@ -241,8 +255,6 @@ shinyServer(function(input, output, session) {
         type = "gaussian", interval = c(18, 102), exponent = exponent
       )
 
-
-
       shiny::incProgress(message = "Estimating age-at-death ....")
 
       # Age-at-Death Estimation ----
@@ -252,12 +264,11 @@ shinyServer(function(input, output, session) {
       cp_int <- rumr:::predict.rumr(cp_rum, estimate, alpha)
       tg_int <- rumr:::predict.rumr(tg_rum, estimate, alpha)
 
-
       int_tbl <- data.frame(
         c("Conformal Prediction", "Truncated Gaussian"),
         round(rbind(cp_int, tg_int)[, c("lower", "upper")], digits = 3)
       )
-      colnames(int_tbl) <- c("Uncertainty", "Lower", "Upper")
+      colnames(int_tbl) <- c("Uncertainty Model", "Lower", "Upper")
       rownames(int_tbl) <- NULL
 
       pred_tbl <- round(
@@ -265,42 +276,61 @@ shinyServer(function(input, output, session) {
       )
       colnames(pred_tbl) <- c("Estimate", "Lower", "Upper")
 
-      output$tbl_pred <- function (){
+      tbl_pred <- shiny::reactive({
         caption <- paste0("Predicted Age-at-Death")
         kableExtra::kable_styling(
-          kable_input = kableExtra::kable(x = pred_tbl, caption = caption),
-          bootstrap_options = "striped",
-          full_width = TRUE,
+          kable_input =  kableExtra::kable(x = pred_tbl, caption = caption),
+          bootstrap_options = "striped", full_width = full_width
         )
-      }
+      })
 
-      output$tbl_int <- function() {
-        caption <- paste0("Predictive Interval (", round((1-alpha) * 100),"%)")
+      output$tbl_pred <- shiny::renderText({
+        tbl_pred()
+      })
+
+      tbl_int <- shiny::reactive({
+        caption <- paste0(
+          "Predictive Interval (", round((1-alpha) * 100),"%)"
+        )
+
         kableExtra::kable_styling(
           kable_input =  kableExtra::kable(x = int_tbl, caption = caption),
           bootstrap_options = "striped",
-          full_width = TRUE
+          full_width = full_width
         )
-      }
+      })
 
-      output$plt_tg_rum <- shiny::renderPlot({
+      output$tbl_int <- shiny::renderText({
+        tbl_int()
+      })
+
+      # Plot Truncated Gaussian
+      plt_tg_rum <- shiny::reactive({
         rumr:::plot.rumr(
           x = tg_rum, predicted = estimate,
           alpha = alpha, label = "Age-at-Death", normalize = FALSE, digits = 3
         )
       })
 
+      output$plt_tg_rum <- shiny::renderPlot({
+        plt_tg_rum()
+      })
+
       shiny::incProgress(message = "Assessing neural model ....")
       # Model Assessment ----
-      rma_rum <- switch(input$type,
-        gaussian = {tg_rum},
-        conformal = {cp_rum},
-        local = {lc_rum}
-      )
 
-      rma_int <- rumr:::predict.rumr(rma_rum, alpha = alpha)
+      # rma_rum <- switch(input$type,
+      #   gaussian = {tg_rum},
+      #   conformal = {cp_rum},
+      #   local = {lc_rum}
+      # )
 
-      output$tbl_rma <- shiny::renderText({
+      cp_int <- rumr:::predict.rumr(cp_rum, alpha = alpha)
+      tg_int <- rumr:::predict.rumr(tg_rum, alpha = alpha)
+
+      rma_int <- (cp_int + tg_int) / 2
+
+      tbl_rma <- shiny::reactive({
 
         rma_tbl <- rmar::rmar(
           known = Y, predicted = rma_int,
@@ -312,36 +342,53 @@ shinyServer(function(input, output, session) {
           kable_input = kableExtra::kable(
             x = dplyr::bind_rows(rma_tbl), caption = caption
           ),
-          bootstrap_options = "striped"
+          bootstrap_options = "striped", full_width = full_width
         )
 
       })
 
-      output$plt_accu <- shiny::renderPlot({
+      output$tbl_rma <- shiny::renderText({
+        tbl_rma()
+      })
+
+      plt_accu <- shiny::reactive({
         rmar::rma_accuracy_plot(
           known = Y, predicted = loocv,
           interval = c(18, 102), label = "Age-at-Death"
         )
       })
 
-      output$plt_bias <- shiny::renderPlot({
+      output$plt_accu <- shiny::renderPlot({
+        plt_accu()
+      })
+
+      plt_bias <- shiny::reactive({
         rmar::rma_bias_plot(
           known = Y, predicted = loocv,
           interval = c(18, 102), label = "Age-at-Death"
         )
       })
 
-      output$plt_effi <- shiny::renderPlot({
+      output$plt_bias <- shiny::renderPlot({
+        plt_bias()
+      })
+
+      plt_effi <- shiny::reactive({
         rmar::rma_efficiency_plot(
           known = Y, predicted = rma_int,
           interval = c(18, 102)
         )
       })
 
+      output$plt_effi <- shiny::renderPlot({
+        plt_effi()
+      })
+
       # Linear Surrogate Model ----
       shiny::incProgress(message = "Assessing linear surrogate ....")
 
-      output$tbl_ls_summary <- shiny::renderText({
+      # Linear Surrogate Summary
+      tbl_ls_summary <- shiny::reactive({
 
         ls_tbl <- ls_model$assessment %>%
           dplyr::mutate_if(is.numeric, round, digits = 3)
@@ -349,37 +396,44 @@ shinyServer(function(input, output, session) {
         caption <- "Surrogate Model Assessment"
         kableExtra::kable_styling(
           kable_input = kableExtra::kable(
-            x = dplyr::bind_rows(ls_tbl), caption = caption,
-            align = "c"
+            x = dplyr::bind_rows(ls_tbl), caption = caption, align = "c"
           ),
-          bootstrap_options = "striped"
+          bootstrap_options = "striped", full_width = full_width
         )
-
       })
 
-      output$tbl_ls_model <- shiny::renderText({
+      output$tbl_ls_summary <- shiny::renderText({
+        tbl_ls_summary()
+      })
 
+      tbl_ls_model <- shiny::reactive({
         caption <- "Linear Surrogate Model"
 
         ls_tbl <- ls_model$summary %>%
-          dplyr::mutate_if(is.numeric, round, digits = 3) %>%
           dplyr::arrange(rank) %>%
           dplyr::rename(Trait = feature) %>%
           dplyr::rename(CAR = estimate) %>%
           dplyr::rename(Omega = omega) %>%
+          dplyr::mutate(Cumulative = cumsum(Omega)) %>%
           dplyr::rename("p-value" = p.value) %>%
-          dplyr::rename(Rank = rank)
+          dplyr::rename(Rank = rank) %>%
+          dplyr::mutate_if(is.numeric, round, digits = 3)
 
         kableExtra::kable_styling(
           kable_input = kableExtra::kable(
             x = dplyr::bind_rows(ls_tbl), caption = caption
           ),
-          bootstrap_options = "striped"
+          bootstrap_options = "striped", full_width = full_width
         )
 
       })
 
-      output$tbl_ls_pred <- shiny::renderText({
+      output$tbl_ls_model <- shiny::renderText({
+        tbl_ls_model()
+      })
+
+      # Linear Approximation Prediction
+      tbl_ls_pred <- shiny::reactive({
 
         approximation <- rumr:::clamp_value(
           x = lsmr:::predict.lsmr(ls_model,x[,traits]),
@@ -397,15 +451,19 @@ shinyServer(function(input, output, session) {
 
         kableExtra::kable_styling(
           kable_input = kableExtra::kable(
-            x = dplyr::bind_rows(ls_tbl), caption = caption,
-            align = "c"
+            x = dplyr::bind_rows(ls_tbl), caption = caption, align = "c"
           ),
-          bootstrap_options = "striped"
+          bootstrap_options = "striped", full_width = full_width
         )
 
       })
 
-      output$tbl_ls_cont <- shiny::renderText({
+      output$tbl_ls_pred <- shiny::renderText({
+        tbl_ls_pred()
+      })
+
+      # Trait Contribution
+      tbl_ls_cont <- shiny::reactive({
 
         rescale <- function(x) {
           sign(x) * (abs(x) / sum(x))
@@ -421,9 +479,14 @@ shinyServer(function(input, output, session) {
         ls_tbl <- lsmr:::predict.lsmr(ls_model, x[,traits], type = "table") %>%
           dplyr::arrange(Rank) %>%
           dplyr::rename(Trait = Feature) %>%
+          dplyr::rename(Stage = Value) %>%
           dplyr::mutate(
             Contribution = (approximation - baseline) * rescale(Contribution)
           ) %>%
+          dplyr::mutate(
+            Relative = abs(Contribution) / sum(abs(Contribution))
+          ) %>%
+          dplyr::mutate(Cumulative = cumsum(Relative)) %>%
           dplyr::mutate_if(is.numeric, round, digits = 3)
 
         caption <- "Trait Contribution"
@@ -431,13 +494,73 @@ shinyServer(function(input, output, session) {
           kable_input = kableExtra::kable(
             x = dplyr::bind_rows(ls_tbl), caption = caption
           ),
-          bootstrap_options = "striped"
+          bootstrap_options = "striped", full_width = full_width
         )
 
       })
 
+      output$tbl_ls_cont <- shiny::renderText({
+        tbl_ls_cont()
+      })
 
     })
+
+    # Report - Download Handler
+
+    output$btn_report <- downloadHandler(
+
+      filename = function() {
+        name <- paste0("drnnage-report", ".html")
+        return(name)
+      },
+
+      content = function(file) {
+
+
+        shiny::withProgress(message = "Generating Report ...", expr = {
+
+          params <- list(
+            # Tables
+            tbl_pred = tbl_pred(),
+            tbl_int = tbl_int(),
+            tbl_ls_pred = tbl_ls_pred(),
+            tbl_ls_model = tbl_ls_model(),
+            tbl_ls_summary = tbl_ls_summary(),
+            tbl_ls_cont = tbl_ls_cont(),
+            tbl_rma = tbl_rma(),
+            # Plots
+            plt_tg_rum = plt_tg_rum(),
+            plt_accu = plt_accu(),
+            plt_bias = plt_bias(),
+            plt_effi = plt_effi(),
+            # Parameters
+            analysis = list(
+              algorithm = c(
+                "drwnnet" = "Deep Fully Randomized Network",
+                "aerwnnet" = "Stacked Randomized Autoencoder",
+                "edrwnnet" = "Ensemble Deep Fully Randomized Network",
+                "saerwnnet" = "Supervised Randomized Autoencoder"
+              )[input$algorithm],
+              alpha = as.numeric(input$alpha),
+              seed = input$seed,
+              width = as.numeric(input$width),
+              depth = as.numeric(input$depth),
+              exponent = as.numeric(input$exponent),
+              eta = as.numeric(input$eta)
+            )
+          )
+
+          out <- rmarkdown::render(
+            input = 'www/markdown/report/report-template.Rmd',
+            params = params
+          )
+
+          file.rename(out, file)
+
+        })
+
+      }
+    )
 
   })
 

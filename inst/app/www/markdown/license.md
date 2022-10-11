@@ -5,7 +5,9 @@ font-size: 10pt;
 } 
 </style>
 
-DRNNAGE: Deep random neural networks for adult skeletal age-at-death estimation.
+DRNNAGE: Deep random neural networks for adult skeletal age-at-death estimation.  
+
+(C) 2022 David Senhora Navega  
 
 <br>
 This program is free software: you can redistribute it and/or modify

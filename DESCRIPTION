@@ -20,8 +20,10 @@ Remotes:
     github::dsnavega/rmar,
     github::dsnavega/rwnnet,
     github::dsnavega/lsmr
-Depends: 
+Depends:
+    knitr,
     markdown,
+    pagedown,
     shiny,
     shinythemes,
     shinyWidgets,

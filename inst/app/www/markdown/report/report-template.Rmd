@@ -1,0 +1,91 @@
+---
+title: "DRNNAGE Report"
+subtitle: "Age-at-Death Analysis"
+date: "`r Sys.time()`"
+output: 
+  pagedown::html_paged:
+    toc: true
+    number_sections: false
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(
+  cache = FALSE,
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 6,
+  fig.height = 4
+)
+
+rinline <- function(code) {
+  html <- '<code  class="r">``` `r CODE` ```</code>'
+  sub("CODE", code, html)
+}
+
+```
+
+```{r}
+  htmltools::includeMarkdown('../license.md')
+```
+
+## Estimate {.page-break-before}
+<br>
+```{r, echo = FALSE}
+params$tbl_pred
+```
+<br>  
+```{r, echo = FALSE}
+params$tbl_int
+```
+<br>
+```{r, echo = FALSE}
+params$plt_tg_rum
+```
+
+## Explain - Prediction {.page-break-before}
+<br>
+```{r, echo = FALSE}
+params$tbl_ls_pred
+```
+<br>
+```{r, echo = FALSE}
+params$tbl_ls_cont
+```
+## Explain - Model {.page-break-before}
+<br>
+```{r, echo = FALSE}
+params$tbl_ls_summary
+```
+<br>
+```{r, echo = FALSE}
+params$tbl_ls_model
+```
+
+## Assess {.page-break-before}
+<!-- ## Prediction Accuracy Analysis -->
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+params$plt_accu
+```
+<!-- ## Prediction Bias Analysis -->
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+params$plt_bias
+```
+<!-- ## Efficiency Analysis -->
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+params$plt_effi
+```
+
+## Parameters
+
+| Parameter | Value |
+| :--- | ---: |
+|Network | `r params$analysis$algorithm`|
+|Width | `r params$analysis$width`|
+|Depth | `r params$analysis$depth`|
+|Gaussian Noise | `r params$analysis$eta`|
+|Alpha | `r params$analysis$alpha`|
+|Exponent | `r params$analysis$exponent`|
+|Seed | `r params$analysis$seed`|
+
