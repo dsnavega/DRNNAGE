@@ -71,16 +71,6 @@ ParametersUI <- function() {
       step = 0.01
     ),
 
-    # shiny::selectInput(
-    #   inputId = "type",
-    #   label = "Uncertainty Model",
-    #   choices = c(
-    #     "Conformal Prediction" = "conformal",
-    #     "Truncated Gaussian" = "gaussian"
-    #   ),
-    #   selected = "conformal"
-    # ),
-
     shiny::sliderInput(
       inputId = "alpha",
       label = "Uncertainty Level (alpha)",

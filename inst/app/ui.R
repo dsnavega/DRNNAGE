@@ -25,7 +25,6 @@
 #' @author David Senhora Navega
 #'
 ui <- shiny::tagList(
-  # tags$style(type="text/css", "body {padding-top: 70px;}"),
   tags$style(type="text/css", ".download{width:100%;}"),
   shiny::navbarPage(title = "DRNNAGE",
     # position = "fixed-top",

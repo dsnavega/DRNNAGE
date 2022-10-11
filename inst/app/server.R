@@ -87,16 +87,20 @@ shinyServer(function(input, output, session) {
 
     shiny::tagList(
       shiny::br(),
-      shiny::column(width = 4,
+      shiny::fluidRow(
         shiny::br(),
-        shiny::tableOutput("tbl_pred"),
-        shiny::br(),
-        shiny::br(),
-        shiny::tableOutput("tbl_int")
-      ),
-      shiny::column(width = 7, offset = 1,
-        shiny::br(),
-        shiny::plotOutput("plt_tg_rum")
+        shiny::column(width = 4,
+          shiny::br(),
+          shiny::tableOutput("tbl_pred"),
+          shiny::br(),
+          shiny::br(),
+          shiny::tableOutput("tbl_int")
+        ),
+        shiny::column(width = 7, offset = 1,
+          shiny::br(),
+          shiny::plotOutput("plt_tg_rum")
+        ),
+        shiny::br()
       )
     )
 
@@ -118,18 +122,18 @@ shinyServer(function(input, output, session) {
     )
 
     shiny::tagList(
+      shiny::br(),
       shiny::fluidRow(
-
         column(width = 6,
           shiny::tableOutput("tbl_ls_summary"),
+          shiny::br(),
           shiny::tableOutput("tbl_ls_model")
         ),
-
         column(width = 6,
           shiny::tableOutput("tbl_ls_pred"),
+          shiny::br(),
           shiny::tableOutput("tbl_ls_cont")
         )
-
       )
     )
 
@@ -199,21 +203,6 @@ shinyServer(function(input, output, session) {
     # Available Traits
     ntraits <- sum(!is.na(x))
     traits <- names(x)[!is.na(x)]
-
-    output$reportUI <- shiny::renderUI({
-
-      shiny::tagList(
-        shiny::fluidRow(
-          shiny::br(),
-          shiny::hr(),
-          shiny::downloadButton(
-            outputId = "btn_report",
-            label = "Report",
-            class = "download"
-          )
-        )
-      )
-    })
 
     shiny::validate(
       shiny::need(
@@ -318,12 +307,6 @@ shinyServer(function(input, output, session) {
 
       shiny::incProgress(message = "Assessing neural model ....")
       # Model Assessment ----
-
-      # rma_rum <- switch(input$type,
-      #   gaussian = {tg_rum},
-      #   conformal = {cp_rum},
-      #   local = {lc_rum}
-      # )
 
       cp_int <- rumr:::predict.rumr(cp_rum, alpha = alpha)
       tg_int <- rumr:::predict.rumr(tg_rum, alpha = alpha)
@@ -506,6 +489,22 @@ shinyServer(function(input, output, session) {
     })
 
     # Report - Download Handler
+    output$reportUI <- shiny::renderUI({
+
+      shiny::tagList(
+        shiny::br(),
+        shiny::br(),
+        shiny::br(),
+        shiny::br(),
+        shiny::fluidRow(
+          shiny::downloadButton(
+            outputId = "btn_report",
+            label = "Report",
+            class = "download"
+          )
+        )
+      )
+    })
 
     output$btn_report <- downloadHandler(
 
@@ -515,7 +514,6 @@ shinyServer(function(input, output, session) {
       },
 
       content = function(file) {
-
 
         shiny::withProgress(message = "Generating Report ...", expr = {
 
