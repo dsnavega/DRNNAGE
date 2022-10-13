@@ -534,10 +534,10 @@ shinyServer(function(input, output, session) {
             # Parameters
             analysis = list(
               algorithm = c(
-                "drwnnet" = "Deep Fully Randomized Network",
-                "aerwnnet" = "Stacked Randomized Autoencoder",
-                "edrwnnet" = "Ensemble Deep Fully Randomized Network",
-                "saerwnnet" = "Supervised Randomized Autoencoder"
+                "drwnnet" = "Randomized Network",
+                "edrwnnet" = "Ensembled Randomized Network",
+                "edaerwnnet" = "Ensembled Unsupervised Autoencoder",
+                "saerwnnet" = "Ensembled Supervised Autoencoder"
               )[input$algorithm],
               alpha = as.numeric(input$alpha),
               seed = input$seed,
