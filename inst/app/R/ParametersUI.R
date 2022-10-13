@@ -32,14 +32,10 @@ ParametersUI <- function() {
       inputId = "algorithm",
       label = "Network Algorithm",
       choices = c(
-        # Deep Fully Randomized Network (ELM or RVFL)
-        "Deep Fully Randomized Network" = "drwnnet",
-        # Stacked Auto-encoding Network (Shallow/Deep+)
-        "Stacked Randomized Autoencoder" = "aerwnnet",
-        # Ensemble Deep Fully Randomized Network (RVFL)
-        "Ensemble Deep Fully Randomized Network" = "edrwnnet",
-        # Supervised Auto-encoding Network
-        "Supervised Randomized Autoencoder" = "saerwnnet"
+        "Randomized Network" = "drwnnet",
+        "Ensembled Randomized Network" = "edrwnnet",
+        "Ensembled Autoencoder (U)" = "edaerwnnet",
+        "Ensembled Autoencoder (S)" = "saerwnnet"
       ),
       selected = "edrwnnet"
     ),

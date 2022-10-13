@@ -536,8 +536,8 @@ shinyServer(function(input, output, session) {
               algorithm = c(
                 "drwnnet" = "Randomized Network",
                 "edrwnnet" = "Ensembled Randomized Network",
-                "edaerwnnet" = "Ensembled Unsupervised Autoencoder",
-                "saerwnnet" = "Ensembled Supervised Autoencoder"
+                "edaerwnnet" = "Ensembled Autoencoder (U)",
+                "saerwnnet" = "Ensembled Autoencoder (S)"
               )[input$algorithm],
               alpha = as.numeric(input$alpha),
               seed = input$seed,
