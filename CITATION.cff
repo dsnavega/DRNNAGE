@@ -4,6 +4,6 @@ authors:
   - family-names: Senhora Navega
     given-names: David
     orcid: https://orcid.org/0000-0003-4495-3762
-title: Deep random neural networks for adult skeletal age-at-death estimation.
-version: 0.0.0.9000
-date-released: 2022-11-02
+title: DRNNAGE: Deep random neural networks for adult skeletal age-at-death estimation.
+version: 0.0.1.0
+date-released: 2022-12-13

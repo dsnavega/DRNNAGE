@@ -1,14 +1,14 @@
 Package: DRNNAGE
 Title: Deep random neural networks for adult skeletal age-at-death estimation
-Version: 0.0.0.9000
+Version: 0.0.1.0
 Authors@R: 
     person(given = c("David", "Senhora"),
            family = "Navega",
            role = c("aut", "cre", "cph"),
            email = "dsnavega@gmail.com",
            comment = c(ORCID = "0000-0003-4495-3762"))
-Description: Graphical Interface for neural network based multifactorial age-at-death
-                estimation using morphoscopic skeletal analysis.
+Description: Graphical Interface for neural network based age-at-death
+                estimation using macroscopic skeletal analysis.
 License: GPL-3
 Encoding: UTF-8
 Language: en
@@ -20,7 +20,7 @@ Remotes:
     github::dsnavega/rmar,
     github::dsnavega/rwnnet,
     github::dsnavega/lsmr
-Depends:
+Imports:
     knitr,
     markdown,
     pagedown,
@@ -36,3 +36,5 @@ Depends:
     rmar,
     rumr,
     ggplot2
+Depends: 
+    R (>= 2.10)

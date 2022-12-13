@@ -122,16 +122,16 @@ shinyServer(function(input, output, session) {
     )
 
     shiny::tagList(
-      shiny::br(),
+      # shiny::br(),
       shiny::fluidRow(
         column(width = 6,
           shiny::tableOutput("tbl_ls_summary"),
-          shiny::br(),
+          # shiny::br(),
           shiny::tableOutput("tbl_ls_model")
         ),
         column(width = 6,
           shiny::tableOutput("tbl_ls_pred"),
-          shiny::br(),
+          # shiny::br(),
           shiny::tableOutput("tbl_ls_cont")
         )
       )

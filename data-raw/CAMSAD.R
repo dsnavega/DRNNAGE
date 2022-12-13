@@ -21,23 +21,11 @@
 # University of Coimbra
 # Calçada Martim de Freitas, 3000-456, Coimbra
 # Portugal
-#
-#' DRNNAGE
-#'
-#' Run DRNNAGE GUI
-#'
-#' @export
-#'
-#' @usage
-#' DRNNAGE()
-#'
-DRNNAGE <- function() {
 
-  drnnage_dir <- system.file("app", package = "DRNNAGE", mustWork = T)
-  drnnage_app <- shiny::shinyAppDir(appDir = drnnage_dir)
-  shiny::runApp(
-    appDir = drnnage_app,
-    quiet = TRUE
-  )
+# Coimbra Adult Macroscopic Skeletal Aging Dataset
 
-}
+# Dataset is already processed.
+# Read TSV file
+CAMSAD <- readr::read_tsv(file = "data-raw/CAMSAD.tsv")
+usethis::use_data(CAMSAD, overwrite = TRUE)
+

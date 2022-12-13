@@ -46,7 +46,7 @@ ui <- shiny::tagList(
       )
     ),
 
-    shiny::tabPanel(title = "Morphoscopic Analysis",
+    shiny::tabPanel(title = "Macroscopic Analysis",
       shiny::br(),
       shiny::navlistPanel(widths = c(2, 10), well = F,
 
